@@ -1083,6 +1083,24 @@ namespace SS14.Auth.Shared.Data.Migrations
                     b.ToTable("BurnerEmails");
                 });
 
+            modelBuilder.Entity("SS14.Auth.Shared.Data.DeletedUser", b =>
+                {
+                    b.Property<Guid>("SpaceUserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DeletedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValue(new DateTime(2026, 6, 16, 9, 14, 39, 255, DateTimeKind.Utc).AddTicks(2141));
+
+                    b.HasKey("SpaceUserId");
+
+                    b.HasIndex("DeletedOn");
+
+                    b.ToTable("DeletedUserIds");
+                });
+
             modelBuilder.Entity("SS14.Auth.Shared.Data.Hwid", b =>
                 {
                     b.Property<long>("Id")
