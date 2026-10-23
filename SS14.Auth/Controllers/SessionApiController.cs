@@ -64,6 +64,7 @@ public class SessionApiController : ControllerBase
             Expires = _clock.UtcNow + JoinTimeout,
             Hash = hash,
             Hwid = hwidHit,
+            RequestSecurity = request.RequestSecurity,
         });
 
         await _dbContext.SaveChangesAsync();
@@ -72,7 +73,7 @@ public class SessionApiController : ControllerBase
     }
 
     [HttpGet("hasJoined")]
-    public async Task<IActionResult> HasJoined(Guid userId, string hash, bool security = false)
+    public async Task<IActionResult> HasJoined(Guid userId, string hash)
     {
         var hashBytes = Base64UrlEncoder.DecodeBytes(hash);
         if (hashBytes.Length != HashSize)
@@ -101,8 +102,8 @@ public class SessionApiController : ControllerBase
             new HasJoinedConnectionData(
                 hwidString == null ? [] : [hwidString],
                 0.5f,
-                // Only released when the server asks for it. Never add this to QueryUserResponse, that is public.
-                security
+                // Only released when the client granted it when pushing the hash. Never add this to QueryUserResponse, that is public.
+                authHash.RequestSecurity
                     ? new HasJoinedSecurityData(authHash.SpaceUser.TwoFactorEnabled)
                     : null));
 
@@ -172,7 +173,7 @@ public class SessionApiController : ControllerBase
         }
     }
 
-    public sealed record JoinRequest(string Hash, string? Hwid)
+    public sealed record JoinRequest(string Hash, string? Hwid, bool RequestSecurity = false)
     {
     }
 
