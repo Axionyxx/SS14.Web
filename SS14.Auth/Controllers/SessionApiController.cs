@@ -72,7 +72,7 @@ public class SessionApiController : ControllerBase
     }
 
     [HttpGet("hasJoined")]
-    public async Task<IActionResult> HasJoined(Guid userId, string hash)
+    public async Task<IActionResult> HasJoined(Guid userId, string hash, bool security = false)
     {
         var hashBytes = Base64UrlEncoder.DecodeBytes(hash);
         if (hashBytes.Length != HashSize)
@@ -98,7 +98,13 @@ public class SessionApiController : ControllerBase
         var resp = new HasJoinedResponse(
             true,
             userResponse,
-            new HasJoinedConnectionData(hwidString == null ? [] : [hwidString], 0.5f));
+            new HasJoinedConnectionData(
+                hwidString == null ? [] : [hwidString],
+                0.5f,
+                // Only released when the server asks for it. Never add this to QueryUserResponse, that is public.
+                security
+                    ? new HasJoinedSecurityData(authHash.SpaceUser.TwoFactorEnabled)
+                    : null));
 
         _dbContext.AuthHashes.Remove(authHash);
 
@@ -175,5 +181,10 @@ public class SessionApiController : ControllerBase
         QueryUserResponse? UserData,
         HasJoinedConnectionData? ConnectionData);
 
-    public sealed record HasJoinedConnectionData(string[] Hwids, float Trust);
+    public sealed record HasJoinedConnectionData(string[] Hwids, float Trust, HasJoinedSecurityData? Security = null);
+
+    /// <summary>
+    /// Security info about the joining account. Extend this rather than adding fields elsewhere pls
+    /// </summary>
+    public sealed record HasJoinedSecurityData(bool TwoFactorEnabled);
 }
